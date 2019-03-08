@@ -1966,6 +1966,28 @@ void vec_wait(
   }
 }
 
+void vec_map_info(
+  int handle,
+  float* mapwalls,
+  float* ax,
+  float* ay)
+{
+  std::shared_ptr<VectorOfStates> vstate = vstate_find(handle);
+  QMutexLocker lock1(&vstate->states_mutex);
+  for (int e = 0; e < vstate->nenvs; e++) {
+    std::shared_ptr<State> state_e = vstate->states[e];
+    QMutexLocker lock2(&state_e->state_mutex);
+    // don't really need a mutex, because step is completed, but it's cheap to lock anyway
+    Agent& a = state_e->agent;
+
+    for (int i = 0; i<RES_W*RES_H; i++) {
+      mapwalls[e*RES_W*RES_H+i] = a.maze->walls[i];
+    }
+    ax[e] = a.x;
+    ay[e] = a.y;
+  }
+}
+
 void shutdown()
 {
   shutdown_flag = true;

@@ -86,6 +86,13 @@ lib.vec_wait.argtypes = [
     npct.ndpointer(dtype=np.bool, ndim=1),     # done
     ]
 
+lib.vec_map_info.argtypes = [
+    c_int,
+    npct.ndpointer(dtype=np.float32, ndim=1),  # mapwalls
+    npct.ndpointer(dtype=np.float32, ndim=1),  # ax
+    npct.ndpointer(dtype=np.float32, ndim=1),  # ay
+    ]
+
 already_inited = False
 
 def init_args_and_threads(cpu_count=4,
@@ -204,8 +211,22 @@ class CoinRunVecEnv(VecEnv):
             self.buf_render_rgb,
             self.buf_rew,
             self.buf_done)
-
+        
         obs_frames = self.buf_rgb
+
+        self.buf_walls = np.zeros([self.num_envs*self.RES_W*self.RES_H], dtype=np.float32)
+        self.buf_ax = np.zeros([self.num_envs], dtype=np.float32)
+        self.buf_ay = np.zeros([self.num_envs], dtype=np.float32)
+        lib.vec_map_info(
+            self.handle,
+            self.buf_walls,
+            self.buf_ax,
+            self.buf_ay)
+        self.buf_walls = self.buf_walls.reshape(self.num_envs,64,64)[:,::-1,:]
+        for i in range(self.num_envs):
+            self.dummy_info[i]['map_info']={'walls': self.buf_walls[i], 
+                                                'ax':self.buf_ax[i], 
+                                                'ay':self.buf_ay[i]}
 
         if Config.USE_BLACK_WHITE:
             obs_frames = np.mean(obs_frames, axis=-1).astype(np.uint8)[...,None]
