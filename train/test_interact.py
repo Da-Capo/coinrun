@@ -2,12 +2,12 @@
 from __future__ import print_function
 
 import sys, gym, time
-from coinrun import setup_utils
-from coinrun.courierenv import make
+from coinrun import setup_utils, make
+from train.wrappers import CourierWrapper
 import numpy as np
 
 setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=1, is_high_res=0)
-env = make("platform", num_envs=1, default_zoom=5.0)
+env = CourierWrapper(make("platform", num_envs=1, default_zoom=5.0))
 # env = make("maze", num_envs=1, default_zoom=5.0)
 
 if not hasattr(env.action_space, 'n'):
