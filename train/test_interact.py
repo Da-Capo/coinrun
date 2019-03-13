@@ -2,11 +2,13 @@
 from __future__ import print_function
 
 import sys, gym, time
-from coinrun import setup_utils, make
+from coinrun import setup_utils
+from coinrun.courierenv import make
 import numpy as np
 
-setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=0, is_high_res=1)
+setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=1, is_high_res=0)
 env = make("platform", num_envs=1, default_zoom=5.0)
+# env = make("maze", num_envs=1, default_zoom=5.0)
 
 if not hasattr(env.action_space, 'n'):
     raise Exception('Keyboard agent only supports discrete action spaces')
@@ -54,7 +56,7 @@ def rollout(env):
             skip -= 1
 
         obser, r, done, info = env.step(np.array([a]))
-        print(info)
+        # print(info)
         if r != 0:
             print("reward %0.3f" % r)
         total_reward += r
