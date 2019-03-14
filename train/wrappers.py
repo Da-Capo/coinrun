@@ -33,8 +33,9 @@ class Goal:
         # empty=46 coin=49 ladder=61 box=35,36,37,38 plant=83,97,98, block=65
         accessable = np.isin(self.walls,[61,35,36,37,38])
         standable = 1-np.isin(self.walls,[46,49])
-        kernel = np.array([[0,0,0],[1,1,0],[0,0,0]],np.uint8)
-        reachable = cv2.dilate(standable.astype(np.uint8), kernel,iterations=7) - standable + accessable
+        # kernel = np.array([[0,0,0],[1,1,0],[0,0,0]],np.uint8)
+        kernel = np.array([[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0]],np.uint8)
+        reachable = cv2.dilate(standable.astype(np.uint8), kernel,iterations=1) - standable + accessable
         if self.debug:
             for i in np.unique(self.walls):
                 if not i in [46,49,61,35,36,37,38,83,97,98,65]:
@@ -70,7 +71,7 @@ class Goal:
         if self.current_goal is None:
             self.set_goal(p, high, low)
         if self.reach_goal(p):
-            reward = 1
+            reward = 10
             done = True
             self.past_goals.append(self.current_goal)
             self.set_goal(p, high, low)
@@ -91,12 +92,13 @@ class Goal:
 
 
 class CourierWrapper(VecEnvWrapper):
-    def __init__(self, venv):
+    def __init__(self, venv, debug=False):
         VecEnvWrapper.__init__(self, venv)
         h,w,c = venv.observation_space.shape
-        obs_space = gym.spaces.Box(0, 255, shape=[h,w,c+1])
+        self.observation_space = gym.spaces.Box(0, 255, shape=[h,w,c+1])
         # init Goal manager
         self.gms = [Goal(i) for i in range(self.num_envs)]
+        self.debug = debug
 
     def reset(self):
         obs = self.venv.reset()
@@ -108,14 +110,17 @@ class CourierWrapper(VecEnvWrapper):
         walls, ax, ay = self.venv.vec_map_info()
         for i in range(self.num_envs):
             p = np.array([ax[i], ay[i]])
-            rews[i], dones[i] = self.gms[i].step(p, walls[i])
-            self.gms[i].render()
-            cv2.imshow('', cv2.resize(obs[i],(300,300)))
-            # print(p.astype(int), self.gms[i].current_goal)
+            rews[i], d = self.gms[i].step(p, walls[i])
+            if not dones[i]:
+                dones[i] = d
             pos_channel[i,0,:2,0] = p
             pos_channel[i,0,2:4,0] = self.gms[i].current_goal
+            if self.debug:
+                self.gms[i].render()
+                cv2.imshow('obs', cv2.resize(obs[i],(300,300)))
+                # print(p.astype(int), self.gms[i].current_goal)
             if dones[i]:
                 self.gms[i].reset()
-        self.venv.vec_reset(dones)
+        # self.venv.vec_reset(dones)
         obs = np.concatenate([obs,pos_channel], -1)
         return obs, rews, dones, infos
