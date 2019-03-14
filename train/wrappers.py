@@ -15,17 +15,17 @@ class Goal:
     def set_goal(self, p, high, low):
         while True:
             dp = np.random.sample(len(high))*(high-low)+ low
-            g = (p + dp).astype(np.int)
+            g = np.around(p + dp).astype(np.int)
             if self.is_valid_goal(g):
                 break
         self.current_goal = g
     
     # 是否到达目标
     def reach_goal(self, p):
-        if np.sum(np.absolute(p.astype(int)-self.current_goal.astype(int))>1)==0:
+        if (np.absolute(p-self.current_goal)<=1).all():
             return True
-        if np.sum(p.astype(int)!=self.current_goal.astype(int))==0:
-            return True
+        # if (p==self.current_goal).all():
+        #     return True
         return False
 
     # 获取可通过区域
@@ -47,7 +47,7 @@ class Goal:
     # 判断目标点是否合法
     def is_valid_goal(self, g):
         # 没有越界
-        if np.sum(g<0)+ np.sum(g>=self.walls.shape) <= 0:
+        if (g>0).all() and (g<self.walls.shape).all():
             # 可通过
             if self.valid_walls[tuple(g)]:
                 return True
@@ -59,11 +59,11 @@ class Goal:
         self.past_goals = []
 
     def step(self, p, walls):
-        if self.walls is None or np.sum(self.walls != walls)>0:
+        if self.walls is None or (self.walls != walls).any():
             self.walls = walls
             self.valid_walls = self.get_valid_walls()
 
-        self.p = p.astype(int)
+        self.p = np.around(p).astype(np.int)
         reward = 0
         done = False
         high = np.array([20, 20])
@@ -108,10 +108,12 @@ class CourierWrapper(VecEnvWrapper):
         obs, rews, dones, infos = self.venv.step_wait()
         pos_channel = np.zeros([self.num_envs, 64, 64, 1])
         walls, ax, ay = self.venv.vec_map_info()
+        ds = []
         for i in range(self.num_envs):
             p = np.array([ax[i], ay[i]])
             rews[i], d = self.gms[i].step(p, walls[i])
-            if d: dones[i] = d
+            ds.append(d)
+            # if d: dones[i] = d
             pos_channel[i,0,:2,0] = p
             pos_channel[i,0,2:4,0] = self.gms[i].current_goal
             if self.debug:
@@ -119,6 +121,7 @@ class CourierWrapper(VecEnvWrapper):
                 cv2.imshow('obs', cv2.resize(obs[i],(300,300)))
             if dones[i]:
                 self.gms[i].reset()
-        self.venv.vec_reset(dones)
+            
+        self.venv.vec_terminate(ds)
         obs = np.concatenate([obs,pos_channel], -1)
         return obs, rews, dones, infos

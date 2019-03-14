@@ -98,6 +98,11 @@ lib.vec_reset.argtypes = [
     npct.ndpointer(dtype=np.float32, ndim=1),  #dones
     ]
 
+lib.vec_terminate.argtypes = [
+    c_int,
+    npct.ndpointer(dtype=np.float32, ndim=1),  #dones
+    ]
+
 already_inited = False
 
 def init_args_and_threads(cpu_count=4,
@@ -239,6 +244,12 @@ class CoinRunVecEnv(VecEnv):
     def vec_reset(self, dones):
         dones = np.array(dones, dtype=np.float32)
         lib.vec_reset(
+            self.handle,
+            dones)
+
+    def vec_terminate(self, dones):
+        dones = np.array(dones, dtype=np.float32)
+        lib.vec_terminate(
             self.handle,
             dones)
 

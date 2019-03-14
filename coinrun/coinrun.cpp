@@ -1999,7 +1999,22 @@ void vec_reset(
     QMutexLocker lock2(&state_e->state_mutex);
     if(dones[e]==1){
       state_reset(vstate->states[e], vstate->game_type);
-      // a.maze->is_terminated = true;
+    }
+  }
+}
+
+void vec_terminate(
+  int handle,
+  float* dones)
+{
+  std::shared_ptr<VectorOfStates> vstate = vstate_find(handle);
+  QMutexLocker lock1(&vstate->states_mutex);
+  for (int e = 0; e < vstate->nenvs; e++) {
+    std::shared_ptr<State> state_e = vstate->states[e];
+    QMutexLocker lock2(&state_e->state_mutex);
+    Agent& a = state_e->agent;
+    if(dones[e]==1){
+      a.maze->is_terminated = true;
     }
   }
 }
