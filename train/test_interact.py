@@ -6,8 +6,8 @@ from coinrun import setup_utils, make
 from train.wrappers import CourierWrapper
 import numpy as np
 
-setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=1, is_high_res=0)
-env = CourierWrapper(make("platform", num_envs=1, default_zoom=5.0))
+setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=1, is_high_res=1)
+env = CourierWrapper(make("platform", num_envs=1, default_zoom=5.0), debug=1)
 # env = make("maze", num_envs=1, default_zoom=5.0)
 
 if not hasattr(env.action_space, 'n'):
@@ -20,17 +20,27 @@ human_agent_action = 0
 human_wants_restart = False
 human_sets_pause = False
 
+key_map = {65363:1,
+            65361:2,
+            65362:3,
+            65364:6}
+
 def key_press(key, mod):
     global human_agent_action, human_wants_restart, human_sets_pause
     if key==0xff0d: human_wants_restart = True
     if key==32: human_sets_pause = not human_sets_pause
-    a = int( key - ord('0') )
+    
+    a = int( key - ord('0'))
+    if int(key) in key_map.keys():
+        a = key_map[key]
     if a <= 0 or a >= ACTIONS: return
     human_agent_action = a
 
 def key_release(key, mod):
     global human_agent_action
     a = int( key - ord('0') )
+    if int(key) in key_map.keys():
+        a = key_map[key]
     if a <= 0 or a >= ACTIONS: return
     if human_agent_action == a:
         human_agent_action = 0

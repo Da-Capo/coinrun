@@ -111,16 +111,14 @@ class CourierWrapper(VecEnvWrapper):
         for i in range(self.num_envs):
             p = np.array([ax[i], ay[i]])
             rews[i], d = self.gms[i].step(p, walls[i])
-            if not dones[i]:
-                dones[i] = d
+            if d: dones[i] = d
             pos_channel[i,0,:2,0] = p
             pos_channel[i,0,2:4,0] = self.gms[i].current_goal
             if self.debug:
                 self.gms[i].render()
                 cv2.imshow('obs', cv2.resize(obs[i],(300,300)))
-                # print(p.astype(int), self.gms[i].current_goal)
             if dones[i]:
                 self.gms[i].reset()
-        # self.venv.vec_reset(dones)
+        self.venv.vec_reset(dones)
         obs = np.concatenate([obs,pos_channel], -1)
         return obs, rews, dones, infos
