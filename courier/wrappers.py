@@ -6,10 +6,7 @@ import cv2
 class Goal:
     def __init__(self, rank=0):
         self.rank = rank
-        self.walls = None
-        self.current_goal = None
-        self.past_goals = []
-        self.level = 0
+        self.reset()
     
     def reset(self):
         self.walls = None
@@ -27,13 +24,14 @@ class Goal:
         done = False
         if self.current_goal is None:
             self.set_goal()
-        if self.reach_goal(p):
-            reward = 1
-            self.level += 1
-            if self.level > 6:
-                done = True
-            self.past_goals.append(self.current_goal)
-            self.set_goal()
+        else: 
+            if self.reach_goal(p):
+                reward = 1
+                self.level += 1
+                if self.level > 6:
+                    done = True
+                self.past_goals.append(self.current_goal)
+                self.set_goal()
         return reward, done
 
 
@@ -103,6 +101,8 @@ class CourierWrapper(VecEnvWrapper):
         walls, ax, ay = self.venv.vec_map_info()
         ds = []
         for i in range(self.num_envs):
+            if dones[i]:
+                self.gms[i].reset()
             p = np.array([ax[i], ay[i]])
             rews[i], d = self.gms[i].step(p, walls[i])
             ds.append(d)
@@ -112,8 +112,6 @@ class CourierWrapper(VecEnvWrapper):
             if self.debug:
                 self.gms[i].render()
                 cv2.imshow('obs', cv2.resize(obs[i],(300,300)))
-            if dones[i]:
-                self.gms[i].reset()
             
         self.venv.vec_terminate(ds)
         obs = np.concatenate([obs,pos_channel], -1)
