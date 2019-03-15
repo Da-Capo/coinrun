@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import sys, gym, time
+sys.path.append("..")
 from coinrun import setup_utils, make
 from train.wrappers import CourierWrapper
 import numpy as np
