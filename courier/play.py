@@ -4,7 +4,7 @@ from __future__ import print_function
 import sys, gym, time
 sys.path.append("..")
 from coinrun import setup_utils, make
-from train.wrappers import CourierWrapper
+from wrappers import CourierWrapper
 import numpy as np
 
 setup_utils.setup_and_load(use_cmd_line_args=False, paint_vel_info=1, is_high_res=1)

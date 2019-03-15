@@ -5,7 +5,7 @@ import datetime
 import sys
 sys.path.append("..")
 from coinrun import setup_utils, make
-from train.wrappers import CourierWrapper
+from wrappers import CourierWrapper
 
 
 
