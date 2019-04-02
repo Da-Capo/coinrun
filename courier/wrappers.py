@@ -6,6 +6,7 @@ import cv2
 class Goal:
     def __init__(self, rank=0):
         self.rank = rank
+        self.n_level = 6
         self.reset()
     
     def reset(self):
@@ -24,26 +25,25 @@ class Goal:
         done = False
         if self.current_goal is None:
             self.set_goal()
-        else: 
-            if self.reach_goal(p):
-                reward = 1
-                self.level += 1
-                if self.level > 6:
-                    done = True
-                self.past_goals.append(self.current_goal)
-                self.set_goal()
+        elif self.reach_goal(p):
+            reward = 1
+            self.level += 1
+            if self.level >= self.n_level:
+                done = True
+            self.past_goals.append(self.current_goal)
+            self.set_goal()
         return reward, done
 
 
     def set_goal(self):
         # high = np.array([20, 20])
         # low = np.array([-20, -20])
-        high = np.array([self.walls.shape[0], 5*(self.level+1)])
-        low = np.array([0, 5*self.level])
-        while True:
-            g = np.around(np.random.sample(len(high))*(high-low)+ low).astype(np.int)
-            if self.is_valid_goal(g):
-                break
+        vp = np.swapaxes(np.where(self.valid_walls>=1), 0, 1)
+        hstep = np.max(vp[:,1]/self.n_level).astype(int)
+        high = np.array([self.walls.shape[0], hstep*(self.level+1)])
+        low = np.array([0, hstep*self.level])
+        step_p = vp[np.all((vp<high)&(vp>low), -1)]
+        g = step_p[np.random.randint(step_p.shape[0])]
         self.current_goal = g
     
     def reach_goal(self, p):
@@ -65,12 +65,6 @@ class Goal:
             cv2.imshow('reachable', np.rot90(cv2.resize(reachable*1., (300,300), interpolation=cv2.INTER_NEAREST)))
         return reachable
     
-    def is_valid_goal(self, g):
-        if (g>0).all() and (g<self.walls.shape).all():
-            if self.valid_walls[tuple(g)]:
-                return True
-        return False
-    
     def render(self):
         goals_img = self.valid_walls*0.3
         for g in self.past_goals:
@@ -85,7 +79,7 @@ class CourierWrapper(VecEnvWrapper):
     def __init__(self, venv, goal_fn=Goal, debug=False):
         VecEnvWrapper.__init__(self, venv)
         h,w,c = venv.observation_space.shape
-        self.observation_space = gym.spaces.Box(0, 255, shape=[h,w,c+1])
+        self.observation_space = gym.spaces.Box(0, 255, shape=[h,w,c+1], dtype=np.float32)
 
         # init Goal manager
         self.gms = [goal_fn(i) for i in range(self.num_envs)]
