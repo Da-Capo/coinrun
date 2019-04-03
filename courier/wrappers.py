@@ -27,9 +27,10 @@ class Goal:
             self.set_goal()
         elif self.reach_goal(p):
             reward = 1
-            self.level += 1
-            if self.level >= self.n_level:
+            if self.level >= self.n_level-1:
                 done = True
+            else:
+                self.level += 1
             self.past_goals.append(self.current_goal)
             self.set_goal()
         return reward, done
@@ -110,3 +111,23 @@ class CourierWrapper(VecEnvWrapper):
         self.venv.vec_terminate(ds)
         obs = np.concatenate([obs,pos_channel], -1)
         return obs, rews, dones, infos
+    
+    def test_gms(self):
+        p = np.zeros(2)
+        while True:
+            self.step(np.array([0]))
+            walls,_,_ = self.venv.vec_map_info()
+            r, d = self.gms[0].step(p, walls[0])
+            # print(d, p, self.gms[0].current_goal)
+            p = self.gms[0].current_goal
+            self.venv.vec_terminate([d])
+            if d:
+                print(self.gms[0].past_goals)
+
+if __name__=="__main__":
+    import sys
+    sys.path.append("..")
+    from coinrun import setup_utils, make
+    setup_utils.setup_and_load(use_cmd_line_args=False, use_black_white=True, num_levels=-1)
+    env = CourierWrapper(make('platform', num_envs=1))
+    env.test_gms()
