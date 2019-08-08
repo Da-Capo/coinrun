@@ -8,10 +8,10 @@ class ConfigSingle(object):
     keyword arguments.
     """
     def __init__(self):
-        self.WORKDIR = './saved_models/'
+        self.WORKDIR = '/tmp/saved_models/'
         self.TB_DIR = '/tmp/tensorflow'
-        if not os.path.exists(self.WORKDIR):
-            os.makedirs(self.WORKDIR, exist_ok=True)
+        # if not os.path.exists(self.WORKDIR):
+        #     os.makedirs(self.WORKDIR, exist_ok=True)
 
         self.LOG_ALL_MPI = True
         self.SYNC_FROM_ROOT = True

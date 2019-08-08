@@ -3,3 +3,6 @@ __pycache__/
 .generated/
 *.egg-info/
 saved_models/
+courier_*/*
+test.py
+.gitignore

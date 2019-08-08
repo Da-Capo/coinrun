@@ -9,20 +9,18 @@ from wrappers import CourierWrapper
 
 
 
-# logdir = 'baselinesLog/ppo/'+datetime.datetime.now().strftime('baselines-%Y-%m-%d/%H%M%S%f')
-# logger.configure(logdir,['csv','log', 'tensorboard'])
-# logger.configure(logdir,['stdout'])
+logdir = 'Log/'+datetime.datetime.now().strftime('baselines-%Y-%m-%d/%H%M%S%f')
+logger.configure(logdir,['stdout','log', 'tensorboard'])
 
-setup_utils.setup_and_load(use_cmd_line_args=False, use_black_white=True)
+setup_utils.setup_and_load(use_cmd_line_args=False, use_black_white=True, paint_vel_info=1, num_levels=1,set_seed=3)
 env = VecMonitor(CourierWrapper(make('platform', num_envs=96)))
 
 def goal_network(x, **conv_kwargs):
     from baselines.a2c.utils import conv, fc, conv_to_fc, batch_to_seq, seq_to_batch, lstm
     import numpy as np
     import tensorflow as tf
-    frame = x[:,:,:,:-1]
-    p = x[:,0,:2,-1]
-    g = x[:,0,2:4,-1]
+    frame = x[:,:,:,:-1]/255.
+    pg = x[:,0,:4,-1]/64.
     # print('-------------------------',x,frame,p,g)
     def activ(curr):
         return tf.nn.relu(curr)
@@ -40,8 +38,7 @@ model = ppo2.learn(env=env,
                    nminibatches=8,
                    lr=5e-4,
                    ent_coef=.01,
-                   gamma=0.999,
                    total_timesteps=int(6e9),
-                   log_interval=1,
+                   log_interval=10,
                    save_interval=100
                   )

@@ -1970,7 +1970,9 @@ void vec_map_info(
   int handle,
   float* mapwalls,
   float* ax,
-  float* ay)
+  float* ay,
+  float* mx,
+  float* my)
 {
   std::shared_ptr<VectorOfStates> vstate = vstate_find(handle);
   QMutexLocker lock1(&vstate->states_mutex);
@@ -1985,6 +1987,13 @@ void vec_map_info(
     }
     ax[e] = a.x;
     ay[e] = a.y;
+
+    int monsters_count = a.maze->monsters.size();
+    for (int i=0; i<monsters_count; ++i) {
+      const std::shared_ptr<Monster>& m = a.maze->monsters[i];
+      mx[e*20+i] = m->x;
+      my[e*20+i] = m->y;
+    }
   }
 }
 

@@ -91,6 +91,8 @@ lib.vec_map_info.argtypes = [
     npct.ndpointer(dtype=np.float32, ndim=1),  # mapwalls
     npct.ndpointer(dtype=np.float32, ndim=1),  # ax
     npct.ndpointer(dtype=np.float32, ndim=1),  # ay
+    npct.ndpointer(dtype=np.float32, ndim=1),  # mx
+    npct.ndpointer(dtype=np.float32, ndim=1),  # my
     ]
 
 lib.vec_reset.argtypes = [
@@ -233,11 +235,15 @@ class CoinRunVecEnv(VecEnv):
         self.buf_walls = np.zeros([self.num_envs*self.RES_W*self.RES_H], dtype=np.float32)
         self.buf_ax = np.zeros([self.num_envs], dtype=np.float32)
         self.buf_ay = np.zeros([self.num_envs], dtype=np.float32)
+        self.buf_mx = np.zeros([self.num_envs*20], dtype=np.float32)
+        self.buf_my = np.zeros([self.num_envs*20], dtype=np.float32)
         lib.vec_map_info(
             self.handle,
             self.buf_walls,
             self.buf_ax,
-            self.buf_ay)
+            self.buf_ay,
+            self.buf_mx,
+            self.buf_my)
         walls = np.transpose(self.buf_walls.reshape(self.num_envs,self.RES_H,self.RES_W), (0, 2, 1))
         return walls, self.buf_ax, self.buf_ay
 
